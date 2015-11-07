@@ -55,5 +55,10 @@ STARTTCP.BAT (just runs `dhcp`; no actual startup is required)
 Please don't set this stuff up in DOSBox on a machine which is not 
 behind a firewall.
 
-Enjoy! 
+There are also a few problems. Contact me if you have any ideas!
+- I can't get mtcp to work under DOSBox with Peter's patch. I'm not sure why.
+- After starting the IPX driver via STARTIPX.BAT, mtcp stops working. This
+  has only beed tested on real hardware, as I can't get mtcp to work under 
+  DOSBox.
+
 // gammy
