@@ -1,0 +1,349 @@
+
+--------------------   The RTL8019 Boot ROM  ----------------------
+
+OutLines:
+A. How to create the RTL8019 Novell RPL Boot ROM Code.
+B. How to install the Novell 3.X 4.X RPL server.
+C. How to install the Microsoft Windows NTAS 3.5 , 3.51 RPL server.
+D. How to install the Microsoft LAN Manager 2.1 Remoteboot server.
+E. How to install the IBM OS/2 LAN Server 4.0 Remoteboot server.
+
+A. How to create the RTL8019 Novell RPL Boot ROM code
+
+ 1. Using Borland's TLINK.EXE to create a file called RBOOT.ROM. For example.
+
+     TLINK BSM.OBJ BSMETHER.OBJ PNPODI.OBJ, RBOOT.ROM /t
+
+   Note:
+
+   TLINK.EXE must be version 6.00 or higher.
+   DPMI16BI.OVL and RTM.EXE must also be in the same directory with TLINK.EXE.
+
+ 2. Run the ROMSUM utility to adjust the size of RBOOT.ROM. For example,
+
+       ROMSUM   16
+
+ 3. Test the Boot ROM's functionality by using TESTROM.COM.
+
+
+ 4. Burn the Boot ROM into a PROM.
+
+
+ Note:
+
+  The Novell Boot ROM Developer's kit (RPL_KIT) provides the following files:
+
+        BSM.OBJ
+        BSMETHER.OBJ
+        ROMSUM.COM
+        TESTROM.COM
+
+  The Realtek Semiconductor provides the object module PNPODI.OBJ.
+
+
+B. How to install the Novell RPL Server
+
+ 1. You must create a remote boot diskette. Copy the following files into
+    this boot  diskette:
+        COMMAND  COM
+        IO       SYS   attrib -s -h io.sys
+        MSDOS    SYS   attrib -s -h msdos.sys
+        LSL      COM
+        PNPODI   COM
+        IPXODI   COM
+        NETX     EXE
+        AUTOEXEC BAT
+        CONFIG   SYS
+
+     The AUTOEXEC.BAT file contains these lines :
+
+        PATH H:\LOGIN;
+        SET COMSPEC=H:\LOGIN\COMMAND.COM
+           DOSKEY
+           LSL
+           PNPODI
+           IPXODI
+           NETX
+
+     The CONFIG.SYS file  contains these lines :
+
+           DEVICE=A:\HIMEM.SYS
+           STACKS=9,256
+           DOS=HIGH,UMB
+           FILES=30
+           BUFFERS=30
+           LASTDRIVE=G
+           FCBS=16,8
+
+ 2. Boot a workstation with at least one floppy disk drive, and log in to
+    the server as SUPERVISOR.
+
+ 3. Change directory to SYS:SYSTEM
+
+ 4. With the DOS boot diskette in driver A: execute the DOSGEN utility. This
+    creates a DOS boot image file named NET$DOS.SYS.
+
+ 5. Copy NET$DOS.SYS to the SYS:LOGIN directory.
+
+ 6. Remoteboot different DOS image files by RPL server
+    Create BOOTCONF.SYS in SYS:\LOGIN directory
+    BOOTCONF.SYS format is
+
+      0 x 52544C*         =   NE2000.SYS
+      0 x 52544C19*       =   RTL8019.SYS
+
+         (Node number)   RTL8019.SYS,NE2000.SYS renamed by NET$DOS.SYS file.
+  Note:
+
+     if have not BOOTCONF.SYS file or Node number is not match in BOOTCONF.SYS
+     Node number , there will be boot default NET$DOS.SYS
+
+ 7. Copy RBOOT.RPL, ETHER.RPL to the SYS:LOGIN directory.
+
+ 8. Copy RPL.NLM to the SYS:SYSTEM directory.
+
+  Note: It depends on file server's version.
+
+        In the RPL developer's kit,
+
+           for Netware 3.11,  use .\RPL\NLM\311\RPL.NLM;
+
+           for Netware 3.12/4.x  use .\RPL\NLM\40\RPL.NLM;
+
+ 9. Edit the AUTOEXEC.NCF file in the SYS:SYSTEM directory.
+
+     For example:
+
+          file server name FTEST
+          ipx internal net 831123
+
+          load NE2000 port=300 int=3 name=ftest_1 frame=ETHERNET_802.2
+          load NE2000 port=300 int=3 name=ftest_2 frame=ETHERNET_II
+          load NE2000 port=300 int=3 name=ftest_3 frame=ETHERNET_802.3
+          load NE2000 port=300 int=3 name=ftest_4 frame=ETHERNET_Snap
+
+          bind ipx to ftest_1 net=21
+          bind ipx to ftest_2 net=22
+          bind ipx to ftest_3 net=23
+          bind ipx to ftest_4 net=24
+
+          ; ---------- for RPL file server -----------------
+          load rpl
+          bind rpl to ftest_1
+          ; ---------- for RPL file server -----------------
+
+          mount all
+
+          load pburst
+          set NCP PACKET SIGNATURE OPTION = 1
+          set immediate purge of deleted files=on
+          load remote FRTSA
+          load rspx
+          load monitor
+
+ 10. Shutdown the file server, and reboot it.
+
+ 11. Configure the RTL8019 PnP Card to "Boot ROM Enable".
+
+ 11. Now, when the file server is running, the workstation equipped with Boot
+     ROM on the RTL8019 card will be attached to the file server without any
+     hard disk or floppy.
+
+
+C. How to install the Microsoft Windows NTAS 3.5 , 3.51 RPL server
+
+ 1.Installing the Remoteboot Service on the Server.
+  (a).Choose Control Panel , Network , Add Software , Remoteboot Service
+      , put NTAS CD or disk they will be installed Remoteboot Service.
+
+   Note:
+        To install RPL server before , you must be had installed DLC and
+   NetBEUI protocol in your NTAS.
+
+ 2.Sharing RPLFILES files and to install MS-DOS Files for Remoteboot
+   workstation.
+
+  (a).Sharing \\systemroot\rpl\rpl\rplfiles to V:\\RPLFILES
+                                                ;use File manager sharing
+
+  (b).Copy all the MS-DOS 6.22 ver files to
+                            ----> \\systemroot\RPL\RPLFILES\BINFILES\DOS622
+       copy c:\dos\*.* V:\BINFILES\DOS622
+       attrib -s -h c:\io.sys
+       attrib -s -h c:\msdos.sys
+       copy c:\io.sys V:\BINFILES\DOS622
+       copy c:\msdos.sys V:\BINFILES\DOS622
+       attrib +s +h c:\io.sys
+       attrib +s +h c:\msdos.sys
+
+ 3.Creating Remoteboot configuration for new adapter
+  (a).copy the MS-DOS device driver (NDIS2) for the RTL8019 PnP adapter to the
+    \\systemroot\RPL\BBLOCK\NDIS directory (PNPND.DOS of RTL8019 NDIS2 driver)
+  (b).Create the directory \\systemroot\RPL\BBLOCK\NETBEUI\RTL8019 and
+      copy RTL8019.CNF , protocol.ini files
+  (c).use RPLCMD utility to add a bblock record for new adapter.
+  (d).In MS-DOS Prompt type <1>. NET START RemoteBoot
+                            <2>. RPLCMD
+  (e).Screen will display under line option and you following this do it.
+
+        Adapter Boot Config Profile Service Vendor Wksta [Quite] V
+        Add Del Enum: A
+        VendorName=525419
+        VendorComment=Realtek for RTL8019
+
+        Adapter Boot Config Profile Service Vendor Wksta [Quite] B
+        Add Del Enum:A
+        BootName=DOSX
+        VendorName=525419
+        BbcFile=BBLOCK\NETBEUI\RTL8019\RTL8019.CNF
+        BootCommet=Name of this adapter
+        WindowsSize=0
+
+        Adapter Boot Config Profile Service Vendor Wksta [Quite] C
+        Add Del Enum:A
+        ConfigName=DOS622X
+        BootName=DOSX
+        DirName=DOS
+        DirName2=DOS622
+        FitShared=FITS\DOS622.FIT
+        FitPersonal=FITS\DOS622P.FIT
+        ConfigComment=DOS 6.22 <Adapter name>
+        DirName3=
+        DirName4=
+
+  (f).Shutdown Windows NTAS server, and reboot it.
+ 4.Login Administrator to NTAS server.
+
+ 5.Starting RemoteBoot service and Remoteboot manager
+  (a).In MS-DOS Prompt type " NET START Remoteboot "
+  (b).In Network administrator , Remoteboot Manager
+      1.Choose Remoteboot , New Profile , created a RTL8019 Profile Name
+      2.Add new workstation for RTL8019 adapter and choose RTL8019 Profile
+        file.
+
+ 6.To config RTL8019 card "Node ID (525419*******)" and Running Boot ROM of
+   RTL8019 Card .
+
+  Note:
+      If the new workstation Node ID is not match for your workstation ,
+      you can use "Convert Adapters" in Remoteboot option.
+
+D. How to install the Microsoft LAN Manager 2.1 Remoteboot server
+
+  1.Installing Microsoft OS/2 in the HD.
+
+  2.Installing Microsoft LAN Manager 2.1 in OS/2.
+
+  Note:
+      Network Driver protocol must have Netbeui , Remoteboot protocol .
+
+  3.Installing RPL server in LAN Manager 2.1
+
+   (a).IN OS2 Full screen mode type RPLSETP  and choose MS-DOS workstation.
+
+      Copy files from A:\
+      Install LAN MANAGER for MS-DOS Remoteboot workstation? Y
+      Install LAN MANAGER for MS OS/2 Remoteboot workstation? N
+      Replicate Remoteboot files ? N
+
+      Is the above information correct (Yes , No ,eXit ) ? Y
+
+  4.Installing MS-DOS Files for Remoteboot workstation.
+   (a).Copy all the MS-DOS files to the
+                             ----> \\systemroot\RPL\RPLFILES\BINFILES\DOS500
+       attrib -s -h c:\io.sys
+       attrib -s -h c:\msdos.sys
+       copy c:\io.sys \\systemroot\RPL\RPLFILES\BINFILES\DOS500
+       copy c:\msdos.sys \\systemroot\RPL\RPLFILES\BINFILES\DOS500
+       attrib +s +h c:\io.sys
+       attrib +s +h c:\msdos.sys
+
+  5.Creating remoteboot configuration for new adapter
+   (a).copy the MS-DOS device driver for the network adapter to the
+    \\systemroot\RPL\BBLOCK\NDIS directory (PNPND.DOS of RTL8019 NDIS2 driver)
+   (b).Create the directory \\systemroot\RPL\BBLOCK\NETBEUI\RTL8019 and
+       copy RTL8019.CNF , protocol.ini files
+   (c).add these contents to RPL.MAP file :
+
+        ;boot bblock records:
+        yyyyyyyyyyyy BBLOCK\NETBEUI\RTL8019.CNF 2 6 F ~ DOS Realtek ~RTL8019
+        52544C19~ ,,,, ~ RDOSX
+
+        ;default workstation records:[enable only one in each address range]
+        52544C19???? ?????? D FITS\DEFAULT [RPL_SERVER_NAME] S ~~~ ,,, ~RDOSX~
+        DEFAULT *~Realtek RTL8019 ~* ~~~
+
+        ;profile and workstation records added by rplmgr:
+
+   (d).In OS/2 Full Screen type "NET" and logon supervisor to Network
+       1.In OS/2 Full Screen type "RPLINST" !!! wait for minutes ....
+       2.Choose View , Available resource , RTLFILES , Use resource ,
+         Local device [ D:]
+
+  6.Starting Remoteboot service and Remoteboot manager
+   (a).In MS-DOS Prompt type " NET START Remoteboot "
+   (b).In OS/2 Full Screen type " RPLMGR " (RPL MANAGER utility)
+      1 Choose Remoteboot , New Profile , created a RTL8019 Profile Name
+      2 Add new workstation for RTL8019 adapter and choose RTL8019 Profile
+        file.
+
+  7.To config RTL8019 card "Node ID (52544C19*******)" and Running Boot ROM of
+    RTL8019 Card .
+  Note:
+      If the new workstation Node ID is not match for your workstation ,
+      you can use "Convert Adapters" in Remoteboot option.
+
+E. How to install the IBM OS/2 LAN Server 4.0 Remoteboot server.
+
+  1.Installing IBM OS/2 in the HD.
+
+  2.Installing IBM LAN Server 4.0 in OS/2.
+
+  Note:
+      LAN Adapter and protocol support must have IBM IEEE 802.2 , NETBIOS
+      protocol.
+
+  3.Installing RPL server in LAN Server 4.0
+   (a).Choose LAN Services , OS/2 LAN Services installation/Configuration
+       Advanced , install or configure this workstation , Domain control
+       install or remove a component , add "DOS Remote IPL Service" , config
+       DOS Remote IPL Service , add MS-DOS 5.0 OK
+
+  4.Creating Remoteboot configuration for new adapter
+   (a).copy the MS-DOS device driver for the network adapter to the
+       \\IBMLAN\RPL\DOS directory (PNPND.DOS) and RTL8019.CNF
+
+   (b).Create the directory \\IBMLAN\RPL\DOS\RTL8019 and copy protocol.ini
+        file.
+
+   (c).add these contents to RPL.MAP file :
+
+       ;server records:
+       yyyyyyyyyyyy RTL8019.CNF 3 10 A IBMLAN$ DOS ~ Realtek ~RTL8019
+       ~FOR~PnP~ ~ ~,,,, R_RTL8019 ~ ~
+
+       ; workstation records
+       52544C190001 RTL8019 ~ RT19IMG LANS4 CNSDS2 ~ ~ ~ ,,, Z R_RTL8019 ~ ~ ~
+
+   (d).logon supervisor to LAN Server 4.0
+      1.In OS/2 Full Screen type "GETRPL" !!! wait for  ....
+      2.Choose LAN Service , LAN Requester , Definition , IPL Images
+        STH5H500 , Actions , Create ,Image ID = RTL8019 .
+      3.Definition , Machine parameters , NEW , Action , Create ,
+
+        Remote IPL workstation
+        Machine ID  . . . . . . . . . . . . . [ RTL8019]
+        Description . . . . . . . . . . . . . [ Realtek RTL8019 PnP Adapter]
+        Network adapter number  . . . . . . . [ 52544C190001            ]
+        Remote IPL server . . . . . . . . . . [ F4 ]
+        Server record identifier. . . . . . . [ F4 or R_RT8019 ]
+
+  5.Starting Remoteboot service and Remoteboot manager
+   (a).In MS-DOS Prompt type " NET START Remoteboot "
+
+  6.To config RTL8019 card "Node ID (52544C190001)" and Running Boot ROM of
+    RTL8019 Card.
+
+
+
+

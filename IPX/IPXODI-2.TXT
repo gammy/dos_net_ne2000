@@ -1,0 +1,16 @@
+This is a set of IPX drivers that I have successfully gotten to work with
+DOOM.  This file includes LSL.COM, NE2000.COM, IPXODI.COM and a couple
+of batch files to make life easier.
+
+NOTE: The NE2000.COM MUST be used with an NE2000 compatible card.  The other
+files should work as long as you provide you vendor specific DOSODI lan card
+driver.
+
+
+NOTE: This copy of IPXODI-2.zip replaces the previous IPXODI.ZIP, this file
+contains the latest versions of the LSL.COM and IPXODI.COM programs.
+
+LSL is version 2.11 for those who are looking for it :)
+
+Josh
+jayjay@salamander.net
